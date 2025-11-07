@@ -2,8 +2,13 @@
 
 #include <pebble.h>
 
+#if defined(PBL_PLATFORM_EMERY)
+#define COMMA_CELL_SIZE 8
+#else
+#define COMMA_CELL_SIZE 6
+#endif
+
 enum {
-  COMMA_CELL_SIZE = 6,
   COMMA_DIGIT_WIDTH = 4,
   COMMA_DIGIT_HEIGHT = 9,
   COMMA_DIGIT_COLON_WIDTH = 2,

@@ -215,16 +215,46 @@ static void prv_schedule_anim_timer(CommaDigitLayer *layer) {
       app_timer_register(COMMA_DIGIT_TIMER_MS, prv_anim_timer_cb, layer);
 }
 
+#if COMMA_CELL_SIZE != 6
+static void prv_fill_block(GContext *ctx, const GPoint origin,
+                           int row_start, int row_end,
+                           int col_start, int col_end) {
+  if (row_start > row_end || col_start > col_end) {
+    return;
+  }
+  if (row_start < 0) {
+    row_start = 0;
+  }
+  if (col_start < 0) {
+    col_start = 0;
+  }
+  if (row_end >= COMMA_CELL_SIZE) {
+    row_end = COMMA_CELL_SIZE - 1;
+  }
+  if (col_end >= COMMA_CELL_SIZE) {
+    col_end = COMMA_CELL_SIZE - 1;
+  }
+  for (int row = row_start; row <= row_end; ++row) {
+    for (int col = col_start; col <= col_end; ++col) {
+      graphics_draw_pixel(ctx, GPoint(origin.x + col, origin.y + row));
+    }
+  }
+}
+#endif
+
+#if COMMA_CELL_SIZE == 6
 static void prv_draw_row_span(GContext *ctx, const GPoint origin, int row,
                               int col_start, int col_end) {
   for (int col = col_start; col <= col_end; ++col) {
     graphics_draw_pixel(ctx, GPoint(origin.x + col, origin.y + row));
   }
 }
+#endif
 
 static void prv_draw_digit_shape(GContext *ctx, const GRect frame,
                                  int size_level) {
   const GPoint origin = frame.origin;
+#if COMMA_CELL_SIZE == 6
   switch (size_level) {
     case 0:
       for (int row = 2; row <= 3; ++row) {
@@ -246,6 +276,34 @@ static void prv_draw_digit_shape(GContext *ctx, const GRect frame,
     default:
       break;
   }
+#else
+  const int size = COMMA_CELL_SIZE;
+  const int outer = 1;
+  const int inner = (size >= 8) ? 2 : 1;
+  const int core_size = (size >= 8) ? 3 : 2;
+  switch (size_level) {
+    case 2:
+      prv_fill_block(ctx, origin, outer, size - outer - 1,
+                     outer, size - outer - 1);
+      break;
+    case 1:
+      prv_fill_block(ctx, origin, inner, size - inner - 1,
+                     outer, size - outer - 1);
+      prv_fill_block(ctx, origin, inner - 1, inner - 1,
+                     inner, size - inner - 1);
+      prv_fill_block(ctx, origin, size - inner, size - inner,
+                     inner, size - inner - 1);
+      break;
+    case 0: {
+      const int start = (size - core_size) / 2;
+      prv_fill_block(ctx, origin, start, start + core_size - 1,
+                     start, start + core_size - 1);
+      break;
+    }
+    default:
+      break;
+  }
+#endif
 }
 
 static void prv_draw_digit_cell(GContext *ctx, int cell_col, int cell_row,
