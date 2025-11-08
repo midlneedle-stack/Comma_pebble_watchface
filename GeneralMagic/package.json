@@ -22,7 +22,17 @@
       "watchface": true
     },
     "messageKeys": {
-      "dummy": 0
+      "TimeFormat": 0,
+      "Theme": 1,
+      "Vibration": 2,
+      "Animation": 3,
+      "VibrateOnOpen": 4,
+      "HourlyChime": 5,
+      "SettingsRequest": 6
+    },
+    "capabilities": ["configurable"],
+    "config": {
+      "url": "https://midlneedle-stack.github.io/Comma_pebble_watchface/config/index.html"
     },
     "resources": {
       "media": []

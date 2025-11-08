@@ -2,22 +2,16 @@
 
 #include <pebble.h>
 
-static inline GColor general_magic_palette_background_fill(void) {
-  return GColorBlack;
-}
+typedef enum {
+  GENERAL_MAGIC_THEME_DARK = 0,
+  GENERAL_MAGIC_THEME_LIGHT = 1,
+} GeneralMagicTheme;
 
-static inline GColor general_magic_palette_background_stroke(void) {
-  return PBL_IF_COLOR_ELSE(GColorFromRGB(0x55, 0x55, 0x55), GColorBlack);
-}
+void general_magic_palette_set_theme(GeneralMagicTheme theme);
+GeneralMagicTheme general_magic_palette_get_theme(void);
 
-static inline GColor general_magic_palette_digit_fill(void) {
-  return general_magic_palette_background_fill();
-}
-
-static inline GColor general_magic_palette_digit_stroke(void) {
-  return GColorWhite;
-}
-
-static inline GColor general_magic_palette_window_background(void) {
-  return PBL_IF_COLOR_ELSE(GColorBlack, GColorWhite);
-}
+GColor general_magic_palette_background_fill(void);
+GColor general_magic_palette_background_stroke(void);
+GColor general_magic_palette_digit_fill(void);
+GColor general_magic_palette_digit_stroke(void);
+GColor general_magic_palette_window_background(void);

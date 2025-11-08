@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>General Magic Settings</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont,
+          'Segoe UI', sans-serif;
+      }
+      body {
+        margin: 0;
+        padding: 24px 18px 48px;
+        background: #000000;
+        color: #ffffff;
+        min-height: 100vh;
+      }
+      body[data-ui-theme='light'] {
+        background: #ffffff;
+        color: #2b2b2b;
+      }
+      h1 {
+        font-size: 20px;
+        font-weight: 600;
+        margin: 0 0 16px;
+        text-align: center;
+      }
+      .preview-wrapper {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 24px;
+      }
+      .watch-preview {
+        width: 220px;
+        height: 220px;
+        border-radius: 28px;
+        padding: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #2b2b2b;
+        background: #000000;
+      }
+      body[data-ui-theme='light'] .watch-preview {
+        border-color: #d1d1d1;
+        background: #ffffff;
+      }
+      .watch-face {
+        width: 160px;
+        height: 160px;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 48px;
+        font-weight: 600;
+        letter-spacing: 2px;
+        transition: background 0.2s ease, color 0.2s ease;
+      }
+      .watch-face[data-theme='dark'] {
+        background: #000000;
+        color: #ffffff;
+        border: 1px solid #ffffff33;
+      }
+      .watch-face[data-theme='light'] {
+        background: #ffffff;
+        color: #000000;
+        border: 1px solid #00000033;
+      }
+      .panel {
+        background: #2b2b2b;
+        padding: 18px;
+        border-radius: 16px;
+        margin-bottom: 18px;
+      }
+      body[data-ui-theme='light'] .panel {
+        background: #ffffff;
+        border: 1px solid #dcdcdc;
+        color: #2b2b2b;
+      }
+      .field-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+        opacity: 0.8;
+      }
+      .segmented {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+        gap: 10px;
+      }
+      .segmented button {
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid #444;
+        background: #1a1a1a;
+        color: #ffffff;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 0.15s ease, color 0.15s ease,
+          border 0.15s ease;
+      }
+      body[data-ui-theme='light'] .segmented button {
+        background: #f3f3f3;
+        border-color: #c6c6c6;
+        color: #2b2b2b;
+      }
+      .segmented button.active {
+        background: #ffffff;
+        color: #000000;
+        border-color: #ffffff;
+      }
+      body[data-ui-theme='light'] .segmented button.active {
+        background: #2b2b2b;
+        color: #ffffff;
+        border-color: #2b2b2b;
+      }
+      .actions {
+        margin-top: 24px;
+      }
+      button.save {
+        width: 100%;
+        padding: 14px;
+        border-radius: 14px;
+        border: none;
+        font-size: 16px;
+        font-weight: 600;
+        background: #ffffff;
+        color: #000000;
+        cursor: pointer;
+      }
+      body[data-ui-theme='light'] button.save {
+        background: #2b2b2b;
+        color: #ffffff;
+      }
+    </style>
+  </head>
+  <body data-ui-theme="dark">
+    <h1>General Magic</h1>
+    <div class="preview-wrapper">
+      <div class="watch-preview">
+        <div class="watch-face" id="watch-face" data-theme="dark">
+          <span id="watch-time">10:08</span>
+        </div>
+      </div>
+    </div>
+    <form id="config-form">
+      <div class="panel">
+        <div class="field">
+          <div class="field-label">Time Format</div>
+          <div class="segmented" data-field="timeFormat">
+            <button type="button" data-value="12">12 Hour</button>
+            <button type="button" data-value="24">24 Hour</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="field">
+          <div class="field-label">Theme</div>
+          <div class="segmented" data-field="theme">
+            <button type="button" data-value="dark">Dark</button>
+            <button type="button" data-value="light">Light</button>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Vibration</div>
+          <div class="segmented" data-field="vibration" data-type="bool">
+            <button type="button" data-value="true">On</button>
+            <button type="button" data-value="false">Off</button>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Animation</div>
+          <div class="segmented" data-field="animation" data-type="bool">
+            <button type="button" data-value="true">On</button>
+            <button type="button" data-value="false">Off</button>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Vibrate On Open</div>
+          <div class="segmented" data-field="vibrateOnOpen" data-type="bool">
+            <button type="button" data-value="true">On</button>
+            <button type="button" data-value="false">Off</button>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Hourly Chime</div>
+          <div class="segmented" data-field="hourlyChime" data-type="bool">
+            <button type="button" data-value="true">On</button>
+            <button type="button" data-value="false">Off</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="save" type="submit">Save</button>
+      </div>
+    </form>
+
+    <script>
+      const DEFAULT_STATE = {
+        timeFormat: '24',
+        theme: 'dark',
+        vibration: true,
+        animation: true,
+        vibrateOnOpen: true,
+        hourlyChime: false,
+      };
+
+      function loadState() {
+        const params = new URLSearchParams(window.location.search || '');
+        const raw = params.get('state');
+        if (!raw) {
+          return Object.assign({}, DEFAULT_STATE);
+        }
+        try {
+          const parsed = JSON.parse(raw);
+          return Object.assign({}, DEFAULT_STATE, parsed);
+        } catch (err) {
+          console.warn('Failed to parse state', err);
+          return Object.assign({}, DEFAULT_STATE);
+        }
+      }
+
+      const state = loadState();
+      const form = document.getElementById('config-form');
+      const watchFace = document.getElementById('watch-face');
+      const watchTime = document.getElementById('watch-time');
+
+      function updatePreview() {
+        const theme = state.theme === 'light' ? 'light' : 'dark';
+        document.body.setAttribute('data-ui-theme', theme);
+        watchFace.setAttribute('data-theme', theme);
+        const now = new Date();
+        let hours = now.getHours();
+        if (state.timeFormat === '12') {
+          hours = hours % 12;
+          if (hours === 0) {
+            hours = 12;
+          }
+        }
+        const minutes = now.getMinutes();
+        const pad = (num) => num.toString().padStart(2, '0');
+        watchTime.textContent = \`\${pad(hours)}:\${pad(minutes)}\`;
+      }
+
+      function syncButtons() {
+        document.querySelectorAll('.segmented').forEach((group) => {
+          const field = group.dataset.field;
+          const value = state[field];
+          group.querySelectorAll('button').forEach((btn) => {
+            btn.classList.toggle('active', String(value) === btn.dataset.value);
+          });
+        });
+        updatePreview();
+      }
+
+      document.querySelectorAll('.segmented').forEach((group) => {
+        group.addEventListener('click', (event) => {
+          const button = event.target.closest('button');
+          if (!button) {
+            return;
+          }
+          const field = group.dataset.field;
+          const type = group.dataset.type || 'text';
+          let value = button.dataset.value;
+          if (type === 'bool') {
+            value = value === 'true';
+          }
+          state[field] = value;
+          syncButtons();
+        });
+      });
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        document.location =
+          'pebblejs://close#' + encodeURIComponent(JSON.stringify(state));
+      });
+
+      syncButtons();
+    </script>
+  </body>
+</html>

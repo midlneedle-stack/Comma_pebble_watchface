@@ -479,7 +479,7 @@ void general_magic_digit_layer_set_time(GeneralMagicDigitLayer *layer,
     return;
   }
 
-  const bool use_24h = clock_is_24h_style();
+  const bool use_24h = state->use_24h_time;
   int hour = time_info->tm_hour;
   if (!use_24h) {
     hour %= 12;
@@ -516,6 +516,19 @@ void general_magic_digit_layer_set_time(GeneralMagicDigitLayer *layer,
   if (layer && layer->layer) {
     layer_mark_dirty(layer->layer);
   }
+}
+
+void general_magic_digit_layer_set_use_24h(GeneralMagicDigitLayer *layer,
+                                           bool use_24h) {
+  GeneralMagicDigitLayerState *state = prv_get_state(layer);
+  if (!state) {
+    return;
+  }
+  if (state->use_24h_time == use_24h) {
+    return;
+  }
+  state->use_24h_time = use_24h;
+  general_magic_digit_layer_refresh_time(layer);
 }
 
 void general_magic_digit_layer_refresh_time(GeneralMagicDigitLayer *layer) {
