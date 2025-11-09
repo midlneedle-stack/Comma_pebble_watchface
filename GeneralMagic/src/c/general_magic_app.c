@@ -118,6 +118,10 @@ static void prv_apply_animation_state(void) {
   if (!s_digit_layer) {
     return;
   }
+  if (s_background_layer) {
+    general_magic_background_layer_set_animated(s_background_layer,
+                                                s_settings.animations_enabled);
+  }
   if (s_settings.animations_enabled) {
     general_magic_digit_layer_start_diag_flip(s_digit_layer);
   } else {
@@ -255,6 +259,7 @@ static void prv_window_load(Window *window) {
   }
 
   prv_apply_theme();
+  prv_apply_animation_state();
 }
 
 static void prv_window_unload(Window *window) {
@@ -269,12 +274,7 @@ static void prv_window_unload(Window *window) {
 
 static void prv_window_appear(Window *window) {
   (void)window;
-  if (s_digit_layer && s_settings.animations_enabled) {
-    general_magic_digit_layer_start_diag_flip(s_digit_layer);
-  } else if (s_digit_layer) {
-    general_magic_digit_layer_stop_animation(s_digit_layer);
-    general_magic_digit_layer_force_redraw(s_digit_layer);
-  }
+  prv_apply_animation_state();
   prv_play_intro_vibe();
 }
 

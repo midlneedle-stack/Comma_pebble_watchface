@@ -12,3 +12,5 @@ bool general_magic_background_layer_cell_progress(GeneralMagicBackgroundLayer *l
                                            int cell_col,
                                            int cell_row,
                                            float *progress_out);
+void general_magic_background_layer_set_animated(GeneralMagicBackgroundLayer *layer,
+                                                 bool animated);

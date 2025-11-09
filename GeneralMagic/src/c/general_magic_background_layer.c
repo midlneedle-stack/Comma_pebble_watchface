@@ -40,6 +40,7 @@ typedef struct {
   int32_t intro_elapsed_ms;
   int32_t activation_window_ms;
   float activation_ratio;
+  bool animation_enabled;
 } GeneralMagicBackgroundLayerState;
 
 struct GeneralMagicBackgroundLayer {
@@ -184,6 +185,7 @@ static void prv_init_cells(GeneralMagicBackgroundLayerState *state) {
   state->intro_elapsed_ms = 0;
   state->activation_window_ms = GENERAL_MAGIC_BG_CELL_STAGGER_MIN_MS;
   state->activation_ratio = 0.0f;
+  state->animation_enabled = true;
   for (int row = 0; row < grid_rows; ++row) {
     for (int col = 0; col < grid_cols; ++col) {
       const int idx = prv_cell_index(col, row);
@@ -401,6 +403,10 @@ static bool prv_step_animation(GeneralMagicBackgroundLayer *layer) {
     return true;
   }
 
+  if (!state->animation_enabled) {
+    return true;
+  }
+
   if (!state->intro_complete) {
     state->intro_elapsed_ms += GENERAL_MAGIC_BG_FRAME_MS;
     if (state->intro_elapsed_ms >= GENERAL_MAGIC_BG_INTRO_DELAY_MS) {
@@ -467,6 +473,10 @@ static void prv_schedule_timer(GeneralMagicBackgroundLayer *layer) {
   }
   GeneralMagicBackgroundLayerState *state = prv_get_state(layer);
   if (state && state->animation_complete) {
+    if (!state->animation_enabled) {
+      layer->timer = NULL;
+      return;
+    }
     layer->timer = NULL;
     return;
   }
@@ -497,6 +507,7 @@ static void prv_start_animation(GeneralMagicBackgroundLayer *layer) {
   }
   GeneralMagicBackgroundLayerState *state = prv_get_state(layer);
   if (state) {
+    state->animation_enabled = true;
     prv_init_cells(state);
   }
   prv_schedule_timer(layer);
@@ -612,4 +623,33 @@ bool general_magic_background_layer_cell_progress(GeneralMagicBackgroundLayer *l
   const int idx = prv_cell_index(cell_col, cell_row);
   const GeneralMagicBackgroundCellState *cell = &state->cells[idx];
   return prv_cell_progress_value(state, cell, progress_out);
+}
+
+void general_magic_background_layer_set_animated(GeneralMagicBackgroundLayer *layer,
+                                                 bool animated) {
+  if (!layer) {
+    return;
+  }
+  GeneralMagicBackgroundLayerState *state = prv_get_state(layer);
+  if (!state) {
+    return;
+  }
+  if (animated) {
+    prv_start_animation(layer);
+    return;
+  }
+
+  state->animation_enabled = false;
+  prv_stop_animation(layer);
+  const int32_t total = GENERAL_MAGIC_BG_CELL_ANIM_MS;
+  for (int i = 0; i < GENERAL_MAGIC_BG_CELL_CAPACITY; ++i) {
+    GeneralMagicBackgroundCellState *cell = &state->cells[i];
+    if (!cell->active) {
+      continue;
+    }
+    cell->elapsed_ms = cell->start_delay_ms + total;
+    cell->complete = true;
+  }
+  state->animation_complete = true;
+  general_magic_background_layer_mark_dirty(layer);
 }
