@@ -44,24 +44,29 @@ static void prv_fill_final_levels(GeneralMagicDigitLayerState *state) {
     return;
   }
   for (int slot = 0; slot < GENERAL_MAGIC_TOTAL_GLYPHS; ++slot) {
+    for (int row = 0; row < GENERAL_MAGIC_DIGIT_HEIGHT; ++row) {
+      for (int col = 0; col < GENERAL_MAGIC_DIGIT_WIDTH; ++col) {
+        state->cell_level[slot][row][col] = -1;
+      }
+    }
     if (!prv_digit_present(state, slot)) {
-      prv_zero_cell_levels(state, slot);
       continue;
     }
     const int glyph_index = prv_glyph_for_slot(state, slot);
     if (glyph_index < GENERAL_MAGIC_GLYPH_ZERO ||
         glyph_index > GENERAL_MAGIC_GLYPH_COLON) {
-      prv_zero_cell_levels(state, slot);
       continue;
     }
     const GeneralMagicGlyph *glyph = &GENERAL_MAGIC_GLYPHS[glyph_index];
     for (int row = 0; row < GENERAL_MAGIC_DIGIT_HEIGHT; ++row) {
       const uint8_t mask = glyph->rows[row];
       const uint8_t pin_mask = glyph->pins[row];
-      for (int col = 0; col < GENERAL_MAGIC_DIGIT_WIDTH; ++col) {
-        const int bit = (1 << (GENERAL_MAGIC_DIGIT_WIDTH - 1 - col));
+      if (!mask) {
+        continue;
+      }
+      for (int col = 0; col < glyph->width && col < GENERAL_MAGIC_DIGIT_WIDTH; ++col) {
+        const int bit = (1 << (glyph->width - 1 - col));
         if (!(mask & bit)) {
-          state->cell_level[slot][row][col] = -1;
           continue;
         }
         const bool pinned = pin_mask & bit;
