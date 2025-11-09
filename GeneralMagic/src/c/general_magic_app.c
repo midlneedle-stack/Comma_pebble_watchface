@@ -183,6 +183,10 @@ static void prv_handle_settings_message(DictionaryIterator *iter) {
     const bool enabled = tuple->value->uint8 > 0;
     if (s_settings.animations_enabled != enabled) {
       s_settings.animations_enabled = enabled;
+      if (!enabled && s_settings.vibrate_on_open) {
+        s_settings.vibrate_on_open = false;
+        updated = true;
+      }
       updated = true;
       prv_apply_animation_state();
     }

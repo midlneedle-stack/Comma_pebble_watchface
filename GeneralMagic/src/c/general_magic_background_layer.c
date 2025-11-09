@@ -641,15 +641,5 @@ void general_magic_background_layer_set_animated(GeneralMagicBackgroundLayer *la
 
   state->animation_enabled = false;
   prv_stop_animation(layer);
-  const int32_t total = GENERAL_MAGIC_BG_CELL_ANIM_MS;
-  for (int i = 0; i < GENERAL_MAGIC_BG_CELL_CAPACITY; ++i) {
-    GeneralMagicBackgroundCellState *cell = &state->cells[i];
-    if (!cell->active) {
-      continue;
-    }
-    cell->elapsed_ms = cell->start_delay_ms + total;
-    cell->complete = true;
-  }
-  state->animation_complete = true;
   general_magic_background_layer_mark_dirty(layer);
 }

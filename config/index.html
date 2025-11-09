@@ -321,6 +321,19 @@
         }
       }
 
+      function syncVibrationDependencies() {
+        if (state.animation === false) {
+          state.vibrateOnOpen = false;
+          var vibGroup = document.querySelector('[data-field="vibrateOnOpen"]');
+          if (vibGroup) {
+            var buttons = vibGroup.querySelectorAll('button');
+            buttons.forEach(function (btn) {
+              btn.classList.toggle('active', btn.getAttribute('data-value') === 'false');
+            });
+          }
+        }
+      }
+
       var segmentedGroups = document.querySelectorAll('.segmented');
       for (var g = 0; g < segmentedGroups.length; g += 1) {
         (function (group) {
@@ -346,6 +359,7 @@
 
       form.addEventListener('submit', function (event) {
         event.preventDefault();
+        syncVibrationDependencies();
         var payload = encodeURIComponent(JSON.stringify(state));
         document.location = 'pebblejs://close#' + payload;
       });

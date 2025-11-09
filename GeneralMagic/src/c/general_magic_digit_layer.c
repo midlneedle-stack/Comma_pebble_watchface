@@ -582,4 +582,10 @@ void general_magic_digit_layer_start_diag_flip(GeneralMagicDigitLayer *layer) {
 void general_magic_digit_layer_stop_animation(GeneralMagicDigitLayer *layer) {
   prv_stop_animation(layer);
   general_magic_digit_layer_refresh_time(layer);
+  if (layer && layer->layer) {
+    GeneralMagicDigitLayerState *state = layer_get_data(layer->layer);
+    if (state) {
+      state->reveal_complete = true;
+    }
+  }
 }
