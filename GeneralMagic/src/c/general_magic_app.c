@@ -123,8 +123,10 @@ static void prv_apply_animation_state(void) {
                                                 s_settings.animations_enabled);
   }
   if (s_settings.animations_enabled) {
+    general_magic_digit_layer_set_static_display(s_digit_layer, false);
     general_magic_digit_layer_start_diag_flip(s_digit_layer);
   } else {
+    general_magic_digit_layer_set_static_display(s_digit_layer, true);
     general_magic_digit_layer_stop_animation(s_digit_layer);
     general_magic_digit_layer_force_redraw(s_digit_layer);
   }

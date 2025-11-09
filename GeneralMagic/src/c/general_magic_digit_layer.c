@@ -18,6 +18,7 @@ typedef struct {
   AppTimer *anim_timer;
   bool reveal_complete;
   GeneralMagicBackgroundLayer *background;
+  bool static_display;
   /* -1 = off, 0 = core, 1 = compact, 2 = full */
   int8_t cell_level[GENERAL_MAGIC_TOTAL_GLYPHS][GENERAL_MAGIC_DIGIT_HEIGHT]
                    [GENERAL_MAGIC_DIGIT_WIDTH];
@@ -30,6 +31,45 @@ struct GeneralMagicDigitLayer {
 
 static inline GeneralMagicDigitLayerState *prv_get_state(GeneralMagicDigitLayer *layer) {
   return layer ? layer->state : NULL;
+}
+
+static inline bool prv_digit_present(const GeneralMagicDigitLayerState *state,
+                                     int slot);
+static int prv_glyph_for_slot(const GeneralMagicDigitLayerState *state, int slot);
+
+static void prv_zero_cell_levels(GeneralMagicDigitLayerState *state, int slot);
+
+static void prv_fill_final_levels(GeneralMagicDigitLayerState *state) {
+  if (!state) {
+    return;
+  }
+  for (int slot = 0; slot < GENERAL_MAGIC_TOTAL_GLYPHS; ++slot) {
+    if (!prv_digit_present(state, slot)) {
+      prv_zero_cell_levels(state, slot);
+      continue;
+    }
+    const int glyph_index = prv_glyph_for_slot(state, slot);
+    if (glyph_index < GENERAL_MAGIC_GLYPH_ZERO ||
+        glyph_index > GENERAL_MAGIC_GLYPH_COLON) {
+      prv_zero_cell_levels(state, slot);
+      continue;
+    }
+    const GeneralMagicGlyph *glyph = &GENERAL_MAGIC_GLYPHS[glyph_index];
+    for (int row = 0; row < GENERAL_MAGIC_DIGIT_HEIGHT; ++row) {
+      const uint8_t mask = glyph->rows[row];
+      const uint8_t pin_mask = glyph->pins[row];
+      for (int col = 0; col < GENERAL_MAGIC_DIGIT_WIDTH; ++col) {
+        const int bit = (1 << (GENERAL_MAGIC_DIGIT_WIDTH - 1 - col));
+        if (!(mask & bit)) {
+          state->cell_level[slot][row][col] = -1;
+          continue;
+        }
+        const bool pinned = pin_mask & bit;
+        state->cell_level[slot][row][col] = pinned ? 0 : 2;
+      }
+    }
+  }
+  state->reveal_complete = true;
 }
 
 static inline int prv_slot_for_digit_index(int digit_index) {
@@ -240,7 +280,11 @@ static void prv_stop_animation(GeneralMagicDigitLayer *layer) {
   for (int slot = 0; slot < GENERAL_MAGIC_TOTAL_GLYPHS; ++slot) {
     prv_zero_cell_levels(state, slot);
   }
-  prv_step_digit_levels(state);
+  if (state->static_display) {
+    prv_fill_final_levels(state);
+  } else {
+    prv_step_digit_levels(state);
+  }
 }
 
 #if GENERAL_MAGIC_CELL_SIZE != 6
@@ -435,6 +479,10 @@ static void prv_start_animation(GeneralMagicDigitLayer *layer) {
   if (!state) {
     return;
   }
+  if (state->static_display) {
+    prv_fill_final_levels(state);
+    return;
+  }
   prv_zero_all_levels(state);
   if (state->anim_timer) {
     app_timer_cancel(state->anim_timer);
@@ -460,6 +508,7 @@ GeneralMagicDigitLayer *general_magic_digit_layer_create(GRect frame) {
   layer->state->anim_timer = NULL;
   layer->state->reveal_complete = false;
   layer->state->background = NULL;
+  layer->state->static_display = false;
   for (int i = 0; i < GENERAL_MAGIC_DIGIT_COUNT; ++i) {
     layer->state->digits[i] = -1;
   }
@@ -540,6 +589,13 @@ void general_magic_digit_layer_set_time(GeneralMagicDigitLayer *layer,
   }
 
   state->use_24h_time = use_24h;
+  if (state->static_display) {
+    prv_fill_final_levels(state);
+    if (layer && layer->layer) {
+      layer_mark_dirty(layer->layer);
+    }
+    return;
+  }
   prv_start_animation(layer);
   if (layer && layer->layer) {
     layer_mark_dirty(layer->layer);
@@ -585,7 +641,26 @@ void general_magic_digit_layer_stop_animation(GeneralMagicDigitLayer *layer) {
   if (layer && layer->layer) {
     GeneralMagicDigitLayerState *state = layer_get_data(layer->layer);
     if (state) {
+      if (state->static_display) {
+        prv_fill_final_levels(state);
+      }
       state->reveal_complete = true;
     }
+  }
+}
+
+void general_magic_digit_layer_set_static_display(GeneralMagicDigitLayer *layer,
+                                                 bool enabled) {
+  GeneralMagicDigitLayerState *state = prv_get_state(layer);
+  if (!state) {
+    return;
+  }
+  state->static_display = enabled;
+  if (enabled) {
+    prv_cancel_anim_timer(layer);
+    prv_fill_final_levels(state);
+    general_magic_digit_layer_force_redraw(layer);
+  } else {
+    state->reveal_complete = false;
   }
 }

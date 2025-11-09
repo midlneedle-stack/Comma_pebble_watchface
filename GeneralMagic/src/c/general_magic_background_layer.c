@@ -607,9 +607,9 @@ void general_magic_background_layer_mark_dirty(GeneralMagicBackgroundLayer *laye
 }
 
 bool general_magic_background_layer_cell_progress(GeneralMagicBackgroundLayer *layer,
-                                          int cell_col,
-                                          int cell_row,
-                                          float *progress_out) {
+                                           int cell_col,
+                                           int cell_row,
+                                           float *progress_out) {
   GeneralMagicBackgroundLayerState *state = prv_get_state(layer);
   if (!state || !progress_out) {
     return false;
@@ -641,5 +641,17 @@ void general_magic_background_layer_set_animated(GeneralMagicBackgroundLayer *la
 
   state->animation_enabled = false;
   prv_stop_animation(layer);
+  GeneralMagicLayout const *layout = general_magic_layout_get();
+  for (int row = 0; row < layout->grid_rows; ++row) {
+    for (int col = 0; col < layout->grid_cols; ++col) {
+      GeneralMagicBackgroundCellState *cell =
+          &state->cells[prv_cell_index(col, row)];
+      if (!cell->active) {
+        continue;
+      }
+      cell->elapsed_ms = cell->start_delay_ms + GENERAL_MAGIC_BG_CELL_ANIM_MS;
+      cell->complete = true;
+    }
+  }
   general_magic_background_layer_mark_dirty(layer);
 }

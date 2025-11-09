@@ -308,6 +308,7 @@
         }
         updatePreview();
         updateVibrationVisibility();
+        syncVibrationDependencies();
       }
 
       function updateVibrationVisibility() {
@@ -328,10 +329,12 @@
           if (vibGroup) {
             var buttons = vibGroup.querySelectorAll('button');
             buttons.forEach(function (btn) {
-              btn.classList.toggle('active', btn.getAttribute('data-value') === 'false');
+              var isOff = btn.getAttribute('data-value') === 'false';
+              btn.classList.toggle('active', isOff);
             });
           }
         }
+        updateVibrationVisibility();
       }
 
       var segmentedGroups = document.querySelectorAll('.segmented');

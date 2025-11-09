@@ -17,3 +17,5 @@ void general_magic_digit_layer_set_use_24h(GeneralMagicDigitLayer *layer, bool u
 /** Trigger the artifact-style reveal animation for the digits. */
 void general_magic_digit_layer_start_diag_flip(GeneralMagicDigitLayer *layer);
 void general_magic_digit_layer_stop_animation(GeneralMagicDigitLayer *layer);
+void general_magic_digit_layer_set_static_display(GeneralMagicDigitLayer *layer,
+                                                 bool enabled);
