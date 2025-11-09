@@ -32,7 +32,7 @@
     },
     "capabilities": ["configurable"],
     "config": {
-      "url": "https://midlneedle-stack.github.io/Comma_pebble_watchface/config/index.html"
+      "url": "https://midlneedle-stack.github.io/General_Magic_pebble_watchface/config/index.html"
     },
     "resources": {
       "media": []
