@@ -39,7 +39,7 @@ static const uint32_t s_intro_vibe_segments[] = {
 };
 
 static const uint32_t s_hourly_chime_segments[] = {
-    28, 90, 20, 120, 26,
+    32, 70, 24, 110, 18, 200,
 };
 
 static bool prv_vibes_allowed(void) {

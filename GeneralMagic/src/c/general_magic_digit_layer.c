@@ -216,6 +216,17 @@ static void prv_schedule_anim_timer(GeneralMagicDigitLayer *layer) {
       app_timer_register(GENERAL_MAGIC_DIGIT_TIMER_MS, prv_anim_timer_cb, layer);
 }
 
+static void prv_cancel_anim_timer(GeneralMagicDigitLayer *layer) {
+  if (!layer || !layer->layer) {
+    return;
+  }
+  GeneralMagicDigitLayerState *state = layer_get_data(layer->layer);
+  if (state && state->anim_timer) {
+    app_timer_cancel(state->anim_timer);
+    state->anim_timer = NULL;
+  }
+}
+
 static void prv_stop_animation(GeneralMagicDigitLayer *layer) {
   if (!layer || !layer->layer) {
     return;
@@ -224,11 +235,12 @@ static void prv_stop_animation(GeneralMagicDigitLayer *layer) {
   if (!state) {
     return;
   }
-  if (state->anim_timer) {
-    app_timer_cancel(state->anim_timer);
-    state->anim_timer = NULL;
-  }
+  prv_cancel_anim_timer(layer);
   state->reveal_complete = true;
+  for (int slot = 0; slot < GENERAL_MAGIC_TOTAL_GLYPHS; ++slot) {
+    prv_zero_cell_levels(state, slot);
+  }
+  prv_step_digit_levels(state);
 }
 
 #if GENERAL_MAGIC_CELL_SIZE != 6
@@ -569,4 +581,5 @@ void general_magic_digit_layer_start_diag_flip(GeneralMagicDigitLayer *layer) {
 
 void general_magic_digit_layer_stop_animation(GeneralMagicDigitLayer *layer) {
   prv_stop_animation(layer);
+  general_magic_digit_layer_refresh_time(layer);
 }
