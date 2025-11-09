@@ -202,84 +202,131 @@
     </form>
 
     <script>
-      const DEFAULT_STATE = {
+      var DEFAULT_STATE = {
         timeFormat: '24',
         theme: 'dark',
         vibration: true,
         animation: true,
         vibrateOnOpen: true,
-        hourlyChime: false,
+        hourlyChime: false
       };
 
+      function extend(target) {
+        for (var i = 1; i < arguments.length; i += 1) {
+          var source = arguments[i] || {};
+          for (var key in source) {
+            if (Object.prototype.hasOwnProperty.call(source, key)) {
+              target[key] = source[key];
+            }
+          }
+        }
+        return target;
+      }
+
+      function getQueryParam(name) {
+        var search = window.location.search || '';
+        if (search.charAt(0) === '?') {
+          search = search.substring(1);
+        }
+        if (!search) {
+          return null;
+        }
+        var parts = search.split('&');
+        for (var i = 0; i < parts.length; i += 1) {
+          var kv = parts[i].split('=');
+          if (kv[0] === name) {
+            return decodeURIComponent(kv[1] || '');
+          }
+        }
+        return null;
+      }
+
       function loadState() {
-        const params = new URLSearchParams(window.location.search || '');
-        const raw = params.get('state');
+        var raw = getQueryParam('state');
         if (!raw) {
-          return Object.assign({}, DEFAULT_STATE);
+          return extend({}, DEFAULT_STATE);
         }
         try {
-          const parsed = JSON.parse(raw);
-          return Object.assign({}, DEFAULT_STATE, parsed);
+          var parsed = JSON.parse(raw);
+          return extend({}, DEFAULT_STATE, parsed);
         } catch (err) {
           console.warn('Failed to parse state', err);
-          return Object.assign({}, DEFAULT_STATE);
+          return extend({}, DEFAULT_STATE);
         }
       }
 
-      const state = loadState();
-      const form = document.getElementById('config-form');
-      const watchFace = document.getElementById('watch-face');
-      const watchTime = document.getElementById('watch-time');
+      var state = loadState();
+      var form = document.getElementById('config-form');
+      var watchFace = document.getElementById('watch-face');
+      var watchTime = document.getElementById('watch-time');
+
+      function pad(num) {
+        return (num < 10 ? '0' : '') + num;
+      }
 
       function updatePreview() {
-        const theme = state.theme === 'light' ? 'light' : 'dark';
+        var theme = state.theme === 'light' ? 'light' : 'dark';
         document.body.setAttribute('data-ui-theme', theme);
         watchFace.setAttribute('data-theme', theme);
-        const now = new Date();
-        let hours = now.getHours();
+        var now = new Date();
+        var hours = now.getHours();
         if (state.timeFormat === '12') {
           hours = hours % 12;
           if (hours === 0) {
             hours = 12;
           }
         }
-        const minutes = now.getMinutes();
-        const pad = (num) => num.toString().padStart(2, '0');
-        watchTime.textContent = \`\${pad(hours)}:\${pad(minutes)}\`;
+        var minutes = now.getMinutes();
+        watchTime.textContent = pad(hours) + ':' + pad(minutes);
       }
 
       function syncButtons() {
-        document.querySelectorAll('.segmented').forEach((group) => {
-          const field = group.dataset.field;
-          const value = state[field];
-          group.querySelectorAll('button').forEach((btn) => {
-            btn.classList.toggle('active', String(value) === btn.dataset.value);
-          });
-        });
+        var groups = document.querySelectorAll('.segmented');
+        for (var i = 0; i < groups.length; i += 1) {
+          var group = groups[i];
+          var field = group.getAttribute('data-field');
+          var value = state[field];
+          var buttons = group.querySelectorAll('button');
+          for (var j = 0; j < buttons.length; j += 1) {
+            var btn = buttons[j];
+            var active = String(value) === btn.getAttribute('data-value');
+            if (active) {
+              btn.classList.add('active');
+            } else {
+              btn.classList.remove('active');
+            }
+          }
+        }
         updatePreview();
       }
 
-      document.querySelectorAll('.segmented').forEach((group) => {
-        group.addEventListener('click', (event) => {
-          const button = event.target.closest('button');
-          if (!button) {
-            return;
-          }
-          const field = group.dataset.field;
-          const type = group.dataset.type || 'text';
-          let value = button.dataset.value;
-          if (type === 'bool') {
-            value = value === 'true';
-          }
-          state[field] = value;
-          syncButtons();
-        });
-      });
+      var segmentedGroups = document.querySelectorAll('.segmented');
+      for (var g = 0; g < segmentedGroups.length; g += 1) {
+        (function (group) {
+          group.addEventListener('click', function (event) {
+            var target = event.target;
+            while (target && target.tagName !== 'BUTTON') {
+              target = target.parentNode;
+            }
+            if (!target) {
+              return;
+            }
+            var field = group.getAttribute('data-field');
+            var type = group.getAttribute('data-type') || 'text';
+            var value = target.getAttribute('data-value');
+            if (type === 'bool') {
+              value = value === 'true';
+            }
+            state[field] = value;
+            syncButtons();
+          });
+        })(segmentedGroups[g]);
+      }
 
-      form.addEventListener('submit', (event) => {
+      form.addEventListener('submit', function (event) {
         event.preventDefault();
-        document.location =
-          'pebblejs://close#' + encodeURIComponent(JSON.stringify(state));
+        var payload = encodeURIComponent(JSON.stringify(state));
+        document.location = 'pebblejs://close#' + payload;
       });
 
       syncButtons();
