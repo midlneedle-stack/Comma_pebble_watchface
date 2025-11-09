@@ -16,22 +16,22 @@ static inline GeneralMagicThemePalette prv_palette(void) {
     palette.background_fill = GColorWhite;
     palette.grid_stroke = PBL_IF_COLOR_ELSE(GColorFromRGB(0x55, 0x55, 0x55), GColorBlack);
     palette.digit_stroke = GColorBlack;
-    palette.digit_stage[0] = PBL_IF_COLOR_ELSE(GColorFromRGB(0xB0, 0xB0, 0xB0), GColorBlack);
+    palette.digit_stage[0] = PBL_IF_COLOR_ELSE(GColorFromRGB(0xAA, 0xAA, 0xAA), GColorBlack);
     palette.digit_stage[1] = PBL_IF_COLOR_ELSE(GColorFromRGB(0x66, 0x66, 0x66), GColorBlack);
     palette.digit_stage[2] = GColorBlack;
-    palette.background_stage[0] = PBL_IF_COLOR_ELSE(GColorFromRGB(0xF4, 0xF4, 0xF4), GColorBlack);
-    palette.background_stage[1] = PBL_IF_COLOR_ELSE(GColorFromRGB(0xC8, 0xC8, 0xC8), GColorBlack);
-    palette.background_stage[2] = PBL_IF_COLOR_ELSE(GColorFromRGB(0x92, 0x92, 0x92), GColorBlack);
+    palette.background_stage[0] = PBL_IF_COLOR_ELSE(GColorFromRGB(0x55, 0x55, 0x55), GColorBlack);
+    palette.background_stage[1] = PBL_IF_COLOR_ELSE(GColorFromRGB(0xAA, 0xAA, 0xAA), GColorBlack);
+    palette.background_stage[2] = GColorBlack;
   } else {
     palette.background_fill = GColorBlack;
     palette.grid_stroke = PBL_IF_COLOR_ELSE(GColorFromRGB(0x55, 0x55, 0x55), GColorBlack);
     palette.digit_stroke = GColorWhite;
-    palette.digit_stage[0] = PBL_IF_COLOR_ELSE(GColorFromRGB(0x88, 0x88, 0x88), GColorWhite);
-    palette.digit_stage[1] = PBL_IF_COLOR_ELSE(GColorFromRGB(0xCC, 0xCC, 0xCC), GColorWhite);
+    palette.digit_stage[0] = PBL_IF_COLOR_ELSE(GColorFromRGB(0x55, 0x55, 0x55), GColorWhite);
+    palette.digit_stage[1] = PBL_IF_COLOR_ELSE(GColorFromRGB(0xAA, 0xAA, 0xAA), GColorWhite);
     palette.digit_stage[2] = GColorWhite;
-    palette.background_stage[0] = PBL_IF_COLOR_ELSE(GColorFromRGB(0x33, 0x33, 0x33), GColorWhite);
-    palette.background_stage[1] = PBL_IF_COLOR_ELSE(GColorFromRGB(0x66, 0x66, 0x66), GColorWhite);
-    palette.background_stage[2] = PBL_IF_COLOR_ELSE(GColorFromRGB(0x99, 0x99, 0x99), GColorWhite);
+    palette.background_stage[0] = PBL_IF_COLOR_ELSE(GColorFromRGB(0x55, 0x55, 0x55), GColorWhite);
+    palette.background_stage[1] = PBL_IF_COLOR_ELSE(GColorFromRGB(0xAA, 0xAA, 0xAA), GColorWhite);
+    palette.background_stage[2] = GColorWhite;
   }
   return palette;
 }
