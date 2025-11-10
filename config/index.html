@@ -159,6 +159,40 @@
       .field.is-hidden {
         display: none;
       }
+      .connect-buttons {
+        display: flex;
+        gap: 0;
+        padding: 3px;
+        border-radius: 100px;
+        background: #161616;
+        border: 1px solid #2b2b2b;
+      }
+      .connect-button {
+        flex: 1;
+        height: 39px;
+        border-radius: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        text-decoration: none;
+        font-size: 14px;
+        background: #161616;
+      }
+      .connect-button + .connect-button {
+        border-left: 1px solid #2b2b2b;
+      }
+      body[data-ui-theme='light'] .connect-buttons {
+        background: #e2e2e2;
+        border-color: #c6c6c6;
+      }
+      body[data-ui-theme='light'] .connect-button {
+        color: #2b2b2b;
+        background: #e2e2e2;
+      }
+      body[data-ui-theme='light'] .connect-button + .connect-button {
+        border-left: 1px solid #c6c6c6;
+      }
       .actions {
         margin-top: 24px;
       }
@@ -266,7 +300,7 @@
               <button type="button" data-value="false">OFF</button>
             </div>
           </div>
-          <div class="field-divider" aria-hidden="true"></div>
+          <div class="field-divider is-hidden" aria-hidden="true" id="hourly-chime-strength-divider"></div>
           <div class="field is-hidden" id="hourly-chime-strength-field">
             <div class="field-label">Hourly Chime Strength</div>
             <div class="segmented" data-field="hourlyChimeStrength">
@@ -380,6 +414,7 @@
       var vibrateOnOpenField = document.getElementById('vibrate-on-open-field');
       var hourlyChimeField = document.getElementById('hourly-chime-field');
       var hourlyChimeStrengthField = document.getElementById('hourly-chime-strength-field');
+      var hourlyChimeStrengthDivider = document.getElementById('hourly-chime-strength-divider');
       var hourlyStrengthVisible = false;
 
       function pad(num) {
@@ -470,6 +505,9 @@
         if (hourlyChimeStrengthField) {
           hourlyChimeStrengthField.classList.remove('is-hidden');
         }
+        if (hourlyChimeStrengthDivider) {
+          hourlyChimeStrengthDivider.classList.remove('is-hidden');
+        }
       }
 
       function hideHourlyStrengthChooser() {
@@ -479,6 +517,9 @@
         }
         if (hourlyChimeStrengthField) {
           hourlyChimeStrengthField.classList.add('is-hidden');
+        }
+        if (hourlyChimeStrengthDivider) {
+          hourlyChimeStrengthDivider.classList.add('is-hidden');
         }
       }
 
@@ -535,37 +576,3 @@
     </script>
   </body>
 </html>
-      .connect-buttons {
-        display: flex;
-        gap: 0;
-        padding: 3px;
-        border-radius: 100px;
-        background: #161616;
-        border: 1px solid #2b2b2b;
-      }
-      .connect-button {
-        flex: 1;
-        height: 39px;
-        border-radius: 100px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #ffffff;
-        text-decoration: none;
-        font-size: 14px;
-        background: #161616;
-      }
-      .connect-button + .connect-button {
-        border-left: 1px solid #2b2b2b;
-      }
-      body[data-ui-theme='light'] .connect-buttons {
-        background: #e2e2e2;
-        border-color: #c6c6c6;
-      }
-      body[data-ui-theme='light'] .connect-button {
-        color: #2b2b2b;
-        background: #e2e2e2;
-      }
-      body[data-ui-theme='light'] .connect-button + .connect-button {
-        border-left: 1px solid #c6c6c6;
-      }
