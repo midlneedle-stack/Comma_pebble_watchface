@@ -38,22 +38,22 @@ enum {
 static AppTimer *s_intro_vibe_timer;
 
 static const uint32_t s_intro_vibe_segments_base[] = {
-    /* short warm-up pulses */
-    18, 220,
-    20, 180,
-    22, 160,
+    /* gradual warm-up */
+    22, 224,
+    26, 190,
+    30, 176,
     /* ramp into the main sweep */
-    25, 140,
-    28, 120,
-    30, 110,
-    32, 95,
-    /* hit current peak intensity (34 ms) */
-    34, 90,
-    34, 160,
-    /* gentle release */
-    30, 200,
-    24, 260,
-    20, 360,
+    35, 157,
+    41, 142,
+    46, 128,
+    50, 115,
+    /* hit current peak intensity */
+    55, 111,
+    60, 194,
+    /* gentle release (longer tail) */
+    66, 267,
+    71, 343,
+    76, 472,
 };
 
 static uint32_t s_intro_vibe_segments_scaled[ARRAY_LENGTH(s_intro_vibe_segments_base)];
@@ -112,7 +112,22 @@ static void prv_cancel_intro_vibe_timer(void) {
   }
 }
 
-static void prv_prepare_intro_vibe_pattern(float scale) {
+static uint32_t prv_intro_vibe_pattern_base_total(void) {
+  static uint32_t s_total = 0;
+  if (s_total == 0) {
+    for (size_t i = 0; i < ARRAY_LENGTH(s_intro_vibe_segments_base); ++i) {
+      s_total += s_intro_vibe_segments_base[i];
+    }
+  }
+  return s_total;
+}
+
+static void prv_prepare_intro_vibe_pattern(uint32_t target_duration_ms) {
+  const uint32_t base_total = prv_intro_vibe_pattern_base_total();
+  float scale = 1.0f;
+  if (base_total > 0) {
+    scale = (float)target_duration_ms / (float)base_total;
+  }
   if (scale < 0.3f) {
     scale = 0.3f;
   }
@@ -153,17 +168,18 @@ static void prv_play_intro_vibe(void) {
     timing.intro_delay_ms = GENERAL_MAGIC_BG_BASE_INTRO_DELAY_MS;
     timing.cell_anim_ms = GENERAL_MAGIC_BG_BASE_CELL_ANIM_MS;
   }
-  float scale = 1.0f;
-  if (timing.cell_anim_ms > 0) {
-    scale = (float)timing.cell_anim_ms / (float)GENERAL_MAGIC_BG_BASE_CELL_ANIM_MS;
+  const float lead_ratio = 0.1f;
+  const float trail_ratio = 0.1f;
+  const uint32_t target_duration_ms = timing.cell_anim_ms + timing.intro_delay_ms;
+  const uint32_t lead_ms = (uint32_t)roundf((float)target_duration_ms * lead_ratio);
+  const uint32_t trail_ms = (uint32_t)roundf((float)target_duration_ms * trail_ratio);
+  const uint32_t extended_duration_ms = target_duration_ms + lead_ms + trail_ms;
+  prv_prepare_intro_vibe_pattern(extended_duration_ms);
+  int32_t desired_delay = (int32_t)GENERAL_MAGIC_BG_FRAME_MS - (int32_t)lead_ms;
+  if (desired_delay < 0) {
+    desired_delay = 0;
   }
-  prv_prepare_intro_vibe_pattern(scale);
-  const uint32_t delay_ms = (timing.intro_delay_ms > 0) ? (uint32_t)timing.intro_delay_ms : 0;
-  if (delay_ms == 0) {
-    prv_intro_vibe_fire(NULL);
-  } else {
-    s_intro_vibe_timer = app_timer_register(delay_ms, prv_intro_vibe_fire, NULL);
-  }
+  s_intro_vibe_timer = app_timer_register((uint32_t)desired_delay, prv_intro_vibe_fire, NULL);
 }
 
 static void prv_play_hourly_chime(void) {
