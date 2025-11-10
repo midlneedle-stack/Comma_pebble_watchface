@@ -35,7 +35,20 @@
       "url": "https://midlneedle-stack.github.io/General_Magic_pebble_watchface/config/index.html"
     },
     "resources": {
-      "media": []
+      "media": [
+        {
+          "type": "png",
+          "name": "IMAGE_APP_ICON",
+          "file": "images/app_icon.png",
+          "menuIcon": true
+        },
+        {
+          "type": "png",
+          "name": "IMAGE_APP_PREVIEW",
+          "file": "images/watch_preview.png",
+          "watchfacePreview": true
+        }
+      ]
     }
   }
 }
