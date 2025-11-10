@@ -27,17 +27,22 @@ enum {
 };
 
 static const uint32_t s_intro_vibe_segments[] = {
-    /* single tap – light intro */
-    24, 160,
-    /* two taps – beginning to swell */
-    26, 120, 29, 150,
-    /* three taps – mid lift */
-    30, 95, 28, 95, 26, 150,
-    /* four taps – peak intensity */
-    34, 75, 32, 75, 30, 75, 28, 170,
-    /* taper back down */
-    26, 140, 25, 210,
-    22, 250, 20, 340,
+    /* short warm-up pulses */
+    18, 220,
+    20, 180,
+    22, 160,
+    /* ramp into the main sweep */
+    25, 140,
+    28, 120,
+    30, 110,
+    32, 95,
+    /* hit current peak intensity (34 ms) */
+    34, 90,
+    34, 160,
+    /* gentle release */
+    30, 200,
+    24, 260,
+    20, 360,
 };
 
 static const uint32_t s_hourly_chime_segments[] = {
