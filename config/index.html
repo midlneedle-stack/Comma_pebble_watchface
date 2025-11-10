@@ -236,8 +236,16 @@
       .vibe-options {
         margin-top: 16px;
       }
+      .vibe-options {
+        overflow: hidden;
+        max-height: 600px;
+        transition: max-height 0.35s cubic-bezier(0.5, 0, 0, 1),
+          opacity 0.25s ease;
+      }
       .vibe-options.is-hidden {
-        display: none;
+        max-height: 0;
+        opacity: 0;
+        pointer-events: none;
       }
       .field.is-hidden {
         display: none;
