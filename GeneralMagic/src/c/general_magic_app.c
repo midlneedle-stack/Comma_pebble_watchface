@@ -1,4 +1,5 @@
 #include <pebble.h>
+#include <time.h>
 
 #include "general_magic_background_layer.h"
 #include "general_magic_digit_layer.h"
@@ -19,6 +20,7 @@ typedef struct {
 } GeneralMagicSettings;
 
 static GeneralMagicSettings s_settings;
+static int s_last_chime_hour = -1;
 
 enum {
   GENERAL_MAGIC_SETTINGS_PERSIST_KEY = 1,
@@ -67,6 +69,29 @@ static void prv_play_hourly_chime(void) {
       .num_segments = ARRAY_LENGTH(s_hourly_chime_segments),
   };
   vibes_enqueue_custom_pattern(pattern);
+}
+
+static void prv_maybe_trigger_hourly_chime(struct tm *tick_time) {
+  if (!s_settings.hourly_chime) {
+    s_last_chime_hour = -1;
+    return;
+  }
+  if (!tick_time) {
+    time_t now = time(NULL);
+    tick_time = localtime(&now);
+  }
+  if (!tick_time) {
+    return;
+  }
+  if (tick_time->tm_min != 0) {
+    s_last_chime_hour = -1;
+    return;
+  }
+  if (s_last_chime_hour == tick_time->tm_hour) {
+    return;
+  }
+  prv_play_hourly_chime();
+  s_last_chime_hour = tick_time->tm_hour;
 }
 
 static void prv_set_default_settings(void) {
@@ -237,13 +262,10 @@ static void prv_message_init(void) {
 
 static void prv_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   (void)units_changed;
-  if (!s_digit_layer) {
-    return;
+  if (s_digit_layer) {
+    general_magic_digit_layer_set_time(s_digit_layer, tick_time);
   }
-  general_magic_digit_layer_set_time(s_digit_layer, tick_time);
-  if (tick_time && tick_time->tm_min == 0) {
-    prv_play_hourly_chime();
-  }
+  prv_maybe_trigger_hourly_chime(tick_time);
 }
 
 static void prv_window_load(Window *window) {
