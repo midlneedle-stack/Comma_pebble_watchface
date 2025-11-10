@@ -62,6 +62,7 @@
         border-radius: 12px;
         overflow: hidden;
         border: 1px solid #2b2b2b;
+        position: relative;
       }
       .watch-preview img {
         width: 100%;
@@ -69,12 +70,27 @@
         object-fit: cover;
         display: block;
         image-rendering: pixelated;
+        transition: filter 0.35s ease, opacity 0.35s ease;
       }
-      .watch-preview img[data-theme='light'] {
+      .watch-preview[data-theme='light'] img {
         filter: invert(1) hue-rotate(180deg);
       }
-      #watch-time {
-        display: none;
+      .watch-time {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        font-weight: 600;
+        letter-spacing: 2px;
+        color: #ffffff;
+        text-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
+        pointer-events: none;
+      }
+      .watch-preview[data-theme='light'] .watch-time {
+        color: #000000;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
       }
       form {
         display: flex;
@@ -339,14 +355,14 @@
     <div class="page">
       <div class="preview-wrapper">
         <div class="watch-frame">
-          <div class="watch-preview">
+          <div class="watch-preview" data-theme="dark" id="watch-preview-container">
             <img
               id="watch-face"
               src="../GeneralMagic_preview.png"
               alt="General Magic watchface preview"
               data-theme="dark"
             />
-            <span id="watch-time" aria-hidden="true"></span>
+            <div class="watch-time" id="watch-time" aria-hidden="true"></div>
           </div>
         </div>
       </div>
@@ -510,6 +526,7 @@
 
       var state = loadState();
       var form = document.getElementById('config-form');
+      var watchPreview = document.getElementById('watch-preview-container');
       var watchFace = document.getElementById('watch-face');
       var watchTime = document.getElementById('watch-time');
       var vibeOptions = document.getElementById('vibe-options');
@@ -606,6 +623,9 @@
 
       function updatePreview() {
         var theme = state.theme === 'light' ? 'light' : 'dark';
+        if (watchPreview) {
+          watchPreview.setAttribute('data-theme', theme);
+        }
         if (watchFace) {
           watchFace.setAttribute('data-theme', theme);
         }
