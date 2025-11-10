@@ -129,6 +129,8 @@
         border-radius: 100px;
         background: #000000;
         border: 1px solid #2b2b2b;
+        position: relative;
+        overflow: hidden;
       }
       .segmented button {
         flex: 1;
@@ -139,16 +141,38 @@
         border-radius: 100px;
         border: none;
         background: #000000;
-        color: #ffffff;
+        color: rgba(255, 255, 255, 0.72);
         font-size: 12px;
         cursor: pointer;
         transition: background 0.26s cubic-bezier(0.5, 0, 0, 1),
           color 0.2s linear, transform 0.26s cubic-bezier(0.5, 0, 0, 1);
         outline: none;
         -webkit-tap-highlight-color: transparent;
+        position: relative;
+        z-index: 1;
       }
       .segmented button.active {
         background: #2b2b2b;
+        color: #ffffff;
+      }
+      .segmented.knob-enabled button {
+        background: transparent;
+      }
+      .segmented.knob-enabled button.active {
+        background: transparent;
+      }
+      .segmented-knob {
+        position: absolute;
+        top: 3px;
+        bottom: 3px;
+        left: 3px;
+        width: calc(50% - 3px);
+        border-radius: 100px;
+        background: #2b2b2b;
+        z-index: 0;
+        transition: transform 0.26s cubic-bezier(0.5, 0, 0, 1),
+          width 0.2s ease, left 0.2s ease;
+        pointer-events: none;
       }
       body[data-ui-theme='light'] .segmented {
         background: #e2e2e2;
@@ -459,6 +483,58 @@
       var hourlyChimeField = document.getElementById('hourly-chime-field');
       var hourlyChimeStrengthField = document.getElementById('hourly-chime-strength-field');
       var hourlyStrengthVisible = false;
+      function initSegmentedKnobs() {
+        var boolGroups = document.querySelectorAll('.segmented[data-type="bool"]');
+        for (var i = 0; i < boolGroups.length; i += 1) {
+          var group = boolGroups[i];
+          if (group.classList.contains('knob-enabled')) {
+            continue;
+          }
+          group.classList.add('knob-enabled');
+          var knob = document.createElement('div');
+          knob.className = 'segmented-knob';
+          group.insertBefore(knob, group.firstChild);
+        }
+      }
+
+      function updateSegmentedKnob(group) {
+        if (!group || !group.classList.contains('knob-enabled')) {
+          return;
+        }
+        var knob = group.querySelector('.segmented-knob');
+        if (!knob) {
+          return;
+        }
+        var buttons = group.querySelectorAll('button');
+        if (!buttons.length) {
+          return;
+        }
+        var referenceButton = buttons[0];
+        var width = referenceButton.offsetWidth;
+        if (!width) {
+          return;
+        }
+        knob.style.width = width + 'px';
+        knob.style.left = referenceButton.offsetLeft + 'px';
+        var activeIndex = 0;
+        for (var i = 0; i < buttons.length; i += 1) {
+          if (buttons[i].classList.contains('active')) {
+            activeIndex = i;
+            break;
+          }
+        }
+        knob.style.transform = 'translateX(' + activeIndex * width + 'px)';
+      }
+
+      function updateAllSegmentedKnobs() {
+        var knobGroups = document.querySelectorAll('.segmented.knob-enabled');
+        for (var i = 0; i < knobGroups.length; i += 1) {
+          updateSegmentedKnob(knobGroups[i]);
+        }
+      }
+
+      initSegmentedKnobs();
+      updateAllSegmentedKnobs();
 
       function pad(num) {
         return (num < 10 ? '0' : '') + num;
@@ -506,6 +582,7 @@
         updatePreview();
         updateVibrationVisibility();
         syncVibrationDependencies();
+        updateAllSegmentedKnobs();
       }
 
       function updateVibrationVisibility() {
@@ -548,6 +625,7 @@
           hourlyChimeStrengthField.classList.remove('is-hidden');
           hourlyChimeStrengthField.classList.add('is-visible');
         }
+        updateAllSegmentedKnobs();
       }
 
       function hideHourlyStrengthChooser() {
@@ -559,10 +637,14 @@
           hourlyChimeStrengthField.classList.add('is-hidden');
           hourlyChimeStrengthField.classList.remove('is-visible');
         }
+        updateAllSegmentedKnobs();
       }
 
 
       var segmentedGroups = document.querySelectorAll('.segmented');
+      window.addEventListener('resize', function () {
+        updateAllSegmentedKnobs();
+      });
       for (var g = 0; g < segmentedGroups.length; g += 1) {
         (function (group) {
           group.addEventListener('click', function (event) {
