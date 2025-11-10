@@ -43,13 +43,11 @@
         display: flex;
         justify-content: center;
       }
-      .watch-preview img {
+      .watch-preview canvas {
         width: 100%;
         height: auto;
         display: block;
-      }
-      body[data-ui-theme='light'] .watch-preview img[data-theme='light'] {
-        filter: invert(1) hue-rotate(180deg);
+        image-rendering: pixelated;
       }
       #watch-time {
         display: none;
@@ -159,12 +157,13 @@
   <body data-ui-theme="dark">
     <div class="preview-wrapper">
       <div class="watch-preview">
-        <img
-          src="../GeneralMagic_preview.png"
-          alt="General Magic watchface preview"
+        <canvas
           id="watch-face"
           data-theme="dark"
-        />
+          width="576"
+          height="672"
+          aria-hidden="true"
+        ></canvas>
         <span id="watch-time" aria-hidden="true"></span>
       </div>
     </div>
@@ -194,6 +193,9 @@
             <button type="button" data-value="false">OFF</button>
           </div>
         </div>
+      </div>
+
+      <div class="panel">
         <div class="field">
           <div class="field-label">Vibration</div>
           <div class="segmented" data-field="vibration" data-type="bool">
@@ -303,6 +305,52 @@
       var watchTime = document.getElementById('watch-time');
       var vibeOptions = document.getElementById('vibe-options');
       var vibrateOnOpenField = document.getElementById('vibrate-on-open-field');
+      var WATCH_CELL_SIZE = 24;
+      var WATCH_GRID_COLS = 24;
+      var WATCH_GRID_ROWS = 28;
+      var WATCH_DIGIT_START_COL = 1;
+      var WATCH_DIGIT_START_ROW = 10;
+      var WATCH_DIGIT_WIDTH = 4;
+      var WATCH_DIGIT_HEIGHT = 9;
+      var WATCH_DIGIT_COLON_WIDTH = 2;
+      var WATCH_DIGIT_GAP = 1;
+      var WATCH_TOTAL_GLYPHS = 5;
+      var WATCH_PALETTES = {
+        dark: {
+          background: '#000000',
+          grid: '#555555',
+          backgroundStages: ['#222222', '#666666', '#ffffff'],
+          digitStages: ['#555555', '#aaaaaa', '#ffffff']
+        },
+        light: {
+          background: '#ffffff',
+          grid: '#777777',
+          backgroundStages: ['#eeeeee', '#999999', '#ffffff'],
+          digitStages: ['#aaaaaa', '#666666', '#000000']
+        }
+      };
+      var WATCH_GLYPHS = [
+        { width: 4, rows: [15, 9, 9, 9, 9, 9, 9, 9, 15], pins: [9, 0, 0, 0, 0, 0, 0, 0, 9] },
+        { width: 4, rows: [2, 2, 14, 2, 2, 2, 2, 2, 15], pins: [0, 0, 2, 0, 0, 0, 0, 0, 2] },
+        { width: 4, rows: [15, 1, 1, 1, 15, 8, 8, 8, 15], pins: [1, 0, 0, 0, 9, 0, 0, 0, 8] },
+        { width: 4, rows: [15, 1, 1, 1, 15, 1, 1, 1, 15], pins: [1, 0, 0, 0, 1, 0, 0, 0, 1] },
+        { width: 4, rows: [9, 9, 9, 9, 15, 1, 1, 1, 1], pins: [0, 0, 0, 0, 9, 0, 0, 0, 0] },
+        { width: 4, rows: [15, 8, 8, 8, 15, 1, 1, 1, 15], pins: [8, 0, 0, 0, 9, 0, 0, 0, 1] },
+        { width: 4, rows: [15, 8, 8, 8, 15, 9, 9, 9, 15], pins: [8, 0, 0, 0, 9, 0, 0, 0, 9] },
+        { width: 4, rows: [15, 1, 1, 1, 1, 1, 1, 1, 1], pins: [1, 0, 0, 0, 0, 0, 0, 0, 0] },
+        { width: 4, rows: [15, 9, 9, 9, 15, 9, 9, 9, 15], pins: [9, 0, 0, 0, 9, 0, 0, 0, 9] },
+        { width: 4, rows: [15, 9, 9, 9, 15, 1, 1, 1, 15], pins: [9, 0, 0, 0, 9, 0, 0, 0, 1] },
+        { width: 2, rows: [0, 0, 3, 3, 0, 3, 3, 0, 0], pins: [0, 0, 2, 1, 0, 1, 2, 0, 0] }
+      ];
+      var watchCanvas = watchFace instanceof HTMLCanvasElement ? watchFace : null;
+      var watchCtx = watchCanvas ? watchCanvas.getContext('2d') : null;
+      var watchAnimState = {
+        cells: [],
+        theme: 'dark',
+        use24h: true,
+        digits: [0, 0, 0, 0],
+        colonOn: true
+      };
 
       function pad(num) {
         return (num < 10 ? '0' : '') + num;
@@ -312,6 +360,7 @@
         var theme = state.theme === 'light' ? 'light' : 'dark';
         document.body.setAttribute('data-ui-theme', theme);
         watchFace.setAttribute('data-theme', theme);
+        updateWatchTheme(theme);
         var now = new Date();
         var hours = now.getHours();
         if (state.timeFormat === '12') {
@@ -322,6 +371,7 @@
         }
         var minutes = now.getMinutes();
         watchTime.textContent = pad(hours) + ':' + pad(minutes);
+        updateWatchTimeFormat(state.timeFormat);
       }
 
       function syncButtons() {
@@ -376,6 +426,186 @@
         updateVibrationVisibility();
       }
 
+      function watchEase(t) {
+        if (t < 0) {
+          t = 0;
+        } else if (t > 1) {
+          t = 1;
+        }
+        var inv = 1 - t;
+        return 1 - inv * inv * inv;
+      }
+
+      function watchColorWithAlpha(hex, alpha) {
+        var bigint = parseInt(hex.replace('#', ''), 16);
+        var r = (bigint >> 16) & 255;
+        var g = (bigint >> 8) & 255;
+        var b = bigint & 255;
+        return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha.toFixed(3) + ')';
+      }
+
+      function initWatchCells() {
+        if (!watchCanvas) {
+          return;
+        }
+        watchAnimState.cells = [];
+        for (var row = 0; row < WATCH_GRID_ROWS; row += 1) {
+          for (var col = 0; col < WATCH_GRID_COLS; col += 1) {
+            watchAnimState.cells.push({
+              col: col,
+              row: row,
+              duration: 1400 + Math.random() * 400,
+              offset: (col + row) * 90 + Math.random() * 180,
+              active: Math.random() < 0.22
+            });
+          }
+        }
+      }
+
+      function drawWatchBackground(now, palette) {
+        if (!watchCtx) {
+          return;
+        }
+        watchCtx.fillStyle = palette.background;
+        watchCtx.fillRect(0, 0, watchCanvas.width, watchCanvas.height);
+        for (var i = 0; i < watchAnimState.cells.length; i += 1) {
+          var cell = watchAnimState.cells[i];
+          var local = (now + cell.offset) % cell.duration;
+          var t = local / cell.duration;
+          var eased = watchEase(t);
+          var stage = 0;
+          if (cell.active) {
+            if (eased > 0.66) {
+              stage = 2;
+            } else if (eased > 0.33) {
+              stage = 1;
+            }
+          }
+          var alpha = cell.active ? 0.25 + eased * 0.5 : 0.08;
+          var color = palette.backgroundStages[stage];
+          watchCtx.fillStyle = watchColorWithAlpha(color, alpha);
+          watchCtx.fillRect(
+            cell.col * WATCH_CELL_SIZE,
+            cell.row * WATCH_CELL_SIZE,
+            WATCH_CELL_SIZE,
+            WATCH_CELL_SIZE
+          );
+        }
+        watchCtx.strokeStyle = palette.grid;
+        watchCtx.lineWidth = 2;
+        for (var x = 0; x <= WATCH_GRID_COLS; x += 1) {
+          var gx = x * WATCH_CELL_SIZE;
+          watchCtx.beginPath();
+          watchCtx.moveTo(gx + 0.5, 0);
+          watchCtx.lineTo(gx + 0.5, watchCanvas.height);
+          watchCtx.stroke();
+        }
+        for (var y = 0; y <= WATCH_GRID_ROWS; y += 1) {
+          var gy = y * WATCH_CELL_SIZE;
+          watchCtx.beginPath();
+          watchCtx.moveTo(0, gy + 0.5);
+          watchCtx.lineTo(watchCanvas.width, gy + 0.5);
+          watchCtx.stroke();
+        }
+      }
+
+      function drawWatchDigits(palette) {
+        if (!watchCtx) {
+          return;
+        }
+        var digits = watchAnimState.digits;
+        var baseCol = WATCH_DIGIT_START_COL;
+        for (var slot = 0; slot < WATCH_TOTAL_GLYPHS; slot += 1) {
+          var glyph = null;
+          if (slot === 2) {
+            if (!watchAnimState.colonOn) {
+              baseCol += WATCH_DIGIT_COLON_WIDTH + WATCH_DIGIT_GAP;
+              continue;
+            }
+            glyph = WATCH_GLYPHS[10];
+          } else {
+            var digitIndex = slot < 2 ? slot : slot - 1;
+            var digitValue = digits[digitIndex];
+            glyph = WATCH_GLYPHS[digitValue];
+          }
+          if (!glyph) {
+            baseCol += WATCH_DIGIT_WIDTH + WATCH_DIGIT_GAP;
+            continue;
+          }
+          for (var row = 0; row < WATCH_DIGIT_HEIGHT; row += 1) {
+            var rowMask = glyph.rows[row];
+            var pinMask = glyph.pins[row];
+            for (var col = 0; col < glyph.width; col += 1) {
+              var bit = 1 << (glyph.width - 1 - col);
+              if (!(rowMask & bit)) {
+                continue;
+              }
+              var isPinned = !!(pinMask & bit);
+              var stage = isPinned ? 1 : 2;
+              var color = palette.digitStages[stage];
+              watchCtx.fillStyle = color;
+              var x = (baseCol + col) * WATCH_CELL_SIZE + 3;
+              var y = (WATCH_DIGIT_START_ROW + row) * WATCH_CELL_SIZE + 3;
+              var size = WATCH_CELL_SIZE - 6;
+              watchCtx.fillRect(x, y, size, size);
+            }
+          }
+          var width = slot === 2 ? WATCH_DIGIT_COLON_WIDTH : WATCH_DIGIT_WIDTH;
+          baseCol += width + WATCH_DIGIT_GAP;
+        }
+      }
+
+      var watchRaf = null;
+      function renderWatch(timestamp) {
+        if (!watchCtx) {
+            return;
+        }
+        var palette = WATCH_PALETTES[watchAnimState.theme] || WATCH_PALETTES.dark;
+        drawWatchBackground(timestamp, palette);
+        drawWatchDigits(palette);
+        watchRaf = requestAnimationFrame(renderWatch);
+      }
+
+      function updateWatchTheme(theme) {
+        watchAnimState.theme = theme === 'light' ? 'light' : 'dark';
+      }
+
+      function updateWatchTimeFormat(format) {
+        watchAnimState.use24h = format !== '12';
+        updateWatchDigits();
+      }
+
+      function updateWatchDigits() {
+        var now = new Date();
+        var hours = now.getHours();
+        if (!watchAnimState.use24h) {
+          hours = hours % 12;
+          if (hours === 0) {
+            hours = 12;
+          }
+        }
+        watchAnimState.digits = [
+          Math.floor(hours / 10),
+          hours % 10,
+          Math.floor(now.getMinutes() / 10),
+          now.getMinutes() % 10
+        ];
+        watchAnimState.colonOn = now.getSeconds() % 2 === 0;
+      }
+
+      function initWatchAnimation() {
+        if (!watchCanvas || !watchCtx) {
+          return;
+        }
+        initWatchCells();
+        updateWatchDigits();
+        if (watchRaf) {
+          cancelAnimationFrame(watchRaf);
+        }
+        watchRaf = requestAnimationFrame(renderWatch);
+        setInterval(updateWatchDigits, 1000);
+      }
+
       var segmentedGroups = document.querySelectorAll('.segmented');
       for (var g = 0; g < segmentedGroups.length; g += 1) {
         (function (group) {
@@ -406,6 +636,7 @@
         document.location = 'pebblejs://close#' + payload;
       });
 
+      initWatchAnimation();
       syncButtons();
     </script>
   </body>
