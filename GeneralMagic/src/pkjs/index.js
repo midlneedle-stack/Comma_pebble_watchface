@@ -2,6 +2,20 @@
   const TAG = 'general_magic-js';
   const CONFIG_URL = 'https://midlneedle-stack.github.io/General_Magic_pebble_watchface/config/index.html';
   const SETTINGS_KEY = 'general_magic_settings';
+  const HOURLY_CHIME_STRENGTHS = ['light', 'medium', 'hard'];
+  const normalizeHourlyStrength = (value) => {
+    return HOURLY_CHIME_STRENGTHS.indexOf(value) === -1 ? 'medium' : value;
+  };
+  const strengthToIndex = (value) => {
+    const normalized = normalizeHourlyStrength(value);
+    const idx = HOURLY_CHIME_STRENGTHS.indexOf(normalized);
+    return idx === -1 ? 1 : idx;
+  };
+  const indexToStrength = (value) => {
+    const idx = typeof value === 'number' ? value : parseInt(value, 10);
+    return HOURLY_CHIME_STRENGTHS[idx] || 'medium';
+  };
+
   const DEFAULT_SETTINGS = {
     timeFormat: '24',
     theme: 'dark',
@@ -9,13 +23,17 @@
     animation: true,
     vibrateOnOpen: true,
     hourlyChime: false,
+    hourlyChimeStrength: 'medium',
   };
 
   const loadSettings = () => {
     try {
       const raw = localStorage.getItem(SETTINGS_KEY);
       if (raw) {
-        return Object.assign({}, DEFAULT_SETTINGS, JSON.parse(raw));
+        const parsed = JSON.parse(raw);
+        const merged = Object.assign({}, DEFAULT_SETTINGS, parsed);
+        merged.hourlyChimeStrength = normalizeHourlyStrength(merged.hourlyChimeStrength);
+        return merged;
       }
     } catch (err) {
       console.warn(`${TAG}: failed to parse settings`, err);
@@ -24,6 +42,7 @@
   };
 
   let settings = loadSettings();
+  settings.hourlyChimeStrength = normalizeHourlyStrength(settings.hourlyChimeStrength);
 
   const persistSettings = () => {
     try {
@@ -42,6 +61,7 @@
         Animation: settings.animation ? 1 : 0,
         VibrateOnOpen: settings.vibrateOnOpen ? 1 : 0,
         HourlyChime: settings.hourlyChime ? 1 : 0,
+        HourlyChimeStrength: strengthToIndex(settings.hourlyChimeStrength),
       },
       () => console.log(`${TAG}: settings sent`),
       (err) => console.warn(`${TAG}: failed to send settings`, err)
@@ -87,6 +107,13 @@
         }
       }
     });
+    if (typeof payload.HourlyChimeStrength !== 'undefined') {
+      const newStrength = indexToStrength(payload.HourlyChimeStrength);
+      if (settings.hourlyChimeStrength !== newStrength) {
+        settings.hourlyChimeStrength = newStrength;
+        changed = true;
+      }
+    }
     if (changed) {
       persistSettings();
     }
@@ -103,6 +130,7 @@
     try {
       const response = JSON.parse(decodeURIComponent(event.response));
       settings = Object.assign({}, settings, response);
+      settings.hourlyChimeStrength = normalizeHourlyStrength(settings.hourlyChimeStrength);
       persistSettings();
       sendSettingsToWatch();
     } catch (err) {

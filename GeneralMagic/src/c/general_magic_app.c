@@ -11,6 +11,13 @@ static Window *s_main_window;
 static GeneralMagicBackgroundLayer *s_background_layer;
 static GeneralMagicDigitLayer *s_digit_layer;
 
+typedef enum {
+  GENERAL_MAGIC_HOURLY_CHIME_STRENGTH_LIGHT = 0,
+  GENERAL_MAGIC_HOURLY_CHIME_STRENGTH_MEDIUM = 1,
+  GENERAL_MAGIC_HOURLY_CHIME_STRENGTH_HARD = 2,
+  GENERAL_MAGIC_HOURLY_CHIME_STRENGTH_COUNT
+} GeneralMagicHourlyChimeStrength;
+
 typedef struct {
   bool use_24h_time;
   GeneralMagicTheme theme;
@@ -18,6 +25,7 @@ typedef struct {
   bool animations_enabled;
   bool vibrate_on_open;
   bool hourly_chime;
+  GeneralMagicHourlyChimeStrength hourly_chime_strength;
 } GeneralMagicSettings;
 
 static GeneralMagicSettings s_settings;
@@ -50,13 +58,51 @@ static const uint32_t s_intro_vibe_segments_base[] = {
 
 static uint32_t s_intro_vibe_segments_scaled[ARRAY_LENGTH(s_intro_vibe_segments_base)];
 
-static const uint32_t s_hourly_chime_segments[] = {
+static const uint32_t s_hourly_chime_segments_base[] = {
     /* Apple-ish spaced double tap: crisp start + delayed accent */
     30, 150, 42, 360,
 };
+static uint32_t
+    s_hourly_chime_segments_scaled[GENERAL_MAGIC_HOURLY_CHIME_STRENGTH_COUNT]
+                                  [ARRAY_LENGTH(s_hourly_chime_segments_base)];
+static bool s_hourly_chime_segments_ready;
 
 static bool prv_vibes_allowed(void) {
   return s_settings.vibration_enabled && !quiet_time_is_active();
+}
+
+static GeneralMagicHourlyChimeStrength prv_clamp_hourly_strength(int value) {
+  if (value < GENERAL_MAGIC_HOURLY_CHIME_STRENGTH_LIGHT ||
+      value >= GENERAL_MAGIC_HOURLY_CHIME_STRENGTH_COUNT) {
+    return GENERAL_MAGIC_HOURLY_CHIME_STRENGTH_MEDIUM;
+  }
+  return (GeneralMagicHourlyChimeStrength)value;
+}
+
+static void prv_prepare_hourly_chime_segments(void) {
+  if (s_hourly_chime_segments_ready) {
+    return;
+  }
+  static const float s_multipliers[GENERAL_MAGIC_HOURLY_CHIME_STRENGTH_COUNT] = {
+      0.85f,
+      1.0f,
+      1.3f,
+  };
+  for (int strength = 0; strength < GENERAL_MAGIC_HOURLY_CHIME_STRENGTH_COUNT;
+       ++strength) {
+    for (size_t idx = 0; idx < ARRAY_LENGTH(s_hourly_chime_segments_base); ++idx) {
+      const bool is_vibe_segment = (idx % 2) == 0;
+      float value = (float)s_hourly_chime_segments_base[idx];
+      if (is_vibe_segment) {
+        value *= s_multipliers[strength];
+      }
+      if (value < 1.0f) {
+        value = 1.0f;
+      }
+      s_hourly_chime_segments_scaled[strength][idx] = (uint32_t)roundf(value);
+    }
+  }
+  s_hourly_chime_segments_ready = true;
 }
 
 static void prv_cancel_intro_vibe_timer(void) {
@@ -124,9 +170,13 @@ static void prv_play_hourly_chime(void) {
   if (!s_settings.hourly_chime || !prv_vibes_allowed()) {
     return;
   }
+  prv_prepare_hourly_chime_segments();
+  const GeneralMagicHourlyChimeStrength strength =
+      prv_clamp_hourly_strength(s_settings.hourly_chime_strength);
+  const uint32_t *segments = s_hourly_chime_segments_scaled[strength];
   const VibePattern pattern = {
-      .durations = s_hourly_chime_segments,
-      .num_segments = ARRAY_LENGTH(s_hourly_chime_segments),
+      .durations = segments,
+      .num_segments = ARRAY_LENGTH(s_hourly_chime_segments_base),
   };
   vibes_enqueue_custom_pattern(pattern);
 }
@@ -161,6 +211,7 @@ static void prv_set_default_settings(void) {
   s_settings.animations_enabled = true;
   s_settings.vibrate_on_open = true;
   s_settings.hourly_chime = false;
+  s_settings.hourly_chime_strength = GENERAL_MAGIC_HOURLY_CHIME_STRENGTH_MEDIUM;
 }
 
 static void prv_load_settings(void) {
@@ -168,11 +219,13 @@ static void prv_load_settings(void) {
   if (!persist_exists(GENERAL_MAGIC_SETTINGS_PERSIST_KEY)) {
     return;
   }
-  GeneralMagicSettings stored;
+  GeneralMagicSettings stored = s_settings;
   const int read =
       persist_read_data(GENERAL_MAGIC_SETTINGS_PERSIST_KEY, &stored, sizeof(stored));
-  if (read == (int)sizeof(stored)) {
+  if (read > 0) {
     s_settings = stored;
+    s_settings.hourly_chime_strength =
+        prv_clamp_hourly_strength(s_settings.hourly_chime_strength);
   }
 }
 
@@ -239,6 +292,8 @@ static void prv_send_settings_to_phone(void) {
   dict_write_uint8(iter, MESSAGE_KEY_Animation, s_settings.animations_enabled ? 1 : 0);
   dict_write_uint8(iter, MESSAGE_KEY_VibrateOnOpen, s_settings.vibrate_on_open ? 1 : 0);
   dict_write_uint8(iter, MESSAGE_KEY_HourlyChime, s_settings.hourly_chime ? 1 : 0);
+  dict_write_uint8(iter, MESSAGE_KEY_HourlyChimeStrength,
+                   (uint8_t)prv_clamp_hourly_strength(s_settings.hourly_chime_strength));
   dict_write_end(iter);
   app_message_outbox_send();
 }
@@ -304,6 +359,16 @@ static void prv_handle_settings_message(DictionaryIterator *iter) {
     const bool enabled = tuple->value->uint8 > 0;
     if (s_settings.hourly_chime != enabled) {
       s_settings.hourly_chime = enabled;
+      updated = true;
+    }
+  }
+
+  tuple = dict_find(iter, MESSAGE_KEY_HourlyChimeStrength);
+  if (tuple) {
+    const GeneralMagicHourlyChimeStrength strength =
+        prv_clamp_hourly_strength(tuple->value->uint8);
+    if (s_settings.hourly_chime_strength != strength) {
+      s_settings.hourly_chime_strength = strength;
       updated = true;
     }
   }

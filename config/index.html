@@ -223,11 +223,19 @@
               <button type="button" data-value="false">OFF</button>
             </div>
           </div>
-          <div class="field">
+          <div class="field" id="hourly-chime-field">
             <div class="field-label">Hourly Chime</div>
             <div class="segmented" data-field="hourlyChime" data-type="bool">
               <button type="button" data-value="true">ON</button>
               <button type="button" data-value="false">OFF</button>
+            </div>
+          </div>
+          <div class="field is-hidden" id="hourly-chime-strength-field">
+            <div class="field-label">Hourly Chime Strength</div>
+            <div class="segmented" data-field="hourlyChimeStrength">
+              <button type="button" data-value="light">LIGHT</button>
+              <button type="button" data-value="medium">MEDIUM</button>
+              <button type="button" data-value="hard">HARD</button>
             </div>
           </div>
         </div>
@@ -264,8 +272,18 @@
         vibration: true,
         animation: true,
         vibrateOnOpen: true,
-        hourlyChime: false
+        hourlyChime: false,
+        hourlyChimeStrength: 'medium'
       };
+
+      var HOURLY_CHIME_STRENGTHS = ['light', 'medium', 'hard'];
+
+      function normalizeHourlyChimeStrength(value) {
+        if (HOURLY_CHIME_STRENGTHS.indexOf(value) === -1) {
+          return 'medium';
+        }
+        return value;
+      }
 
       function extend(target) {
         for (var i = 1; i < arguments.length; i += 1) {
@@ -300,14 +318,23 @@
       function loadState() {
         var raw = getQueryParam('state');
         if (!raw) {
-          return extend({}, DEFAULT_STATE);
+          var fallback = extend({}, DEFAULT_STATE);
+          fallback.hourlyChimeStrength =
+              normalizeHourlyChimeStrength(fallback.hourlyChimeStrength);
+          return fallback;
         }
         try {
           var parsed = JSON.parse(raw);
-          return extend({}, DEFAULT_STATE, parsed);
+          var merged = extend({}, DEFAULT_STATE, parsed);
+          merged.hourlyChimeStrength =
+              normalizeHourlyChimeStrength(merged.hourlyChimeStrength);
+          return merged;
         } catch (err) {
           console.warn('Failed to parse state', err);
-          return extend({}, DEFAULT_STATE);
+          var fallbackState = extend({}, DEFAULT_STATE);
+          fallbackState.hourlyChimeStrength =
+              normalizeHourlyChimeStrength(fallbackState.hourlyChimeStrength);
+          return fallbackState;
         }
       }
 
@@ -317,6 +344,9 @@
       var watchTime = document.getElementById('watch-time');
       var vibeOptions = document.getElementById('vibe-options');
       var vibrateOnOpenField = document.getElementById('vibrate-on-open-field');
+      var hourlyChimeField = document.getElementById('hourly-chime-field');
+      var hourlyChimeStrengthField = document.getElementById('hourly-chime-strength-field');
+      var hourlyStrengthVisible = false;
 
       function pad(num) {
         return (num < 10 ? '0' : '') + num;
@@ -359,6 +389,9 @@
             }
           }
         }
+        if (!state.hourlyChime) {
+          hideHourlyStrengthChooser();
+        }
         updatePreview();
         updateVibrationVisibility();
         syncVibrationDependencies();
@@ -372,6 +405,7 @@
           vibeOptions.classList.remove('is-hidden');
         } else {
           vibeOptions.classList.add('is-hidden');
+          hideHourlyStrengthChooser();
         }
       }
 
@@ -394,6 +428,26 @@
         updateVibrationVisibility();
       }
 
+      function showHourlyStrengthChooser() {
+        hourlyStrengthVisible = true;
+        if (hourlyChimeField) {
+          hourlyChimeField.classList.add('is-hidden');
+        }
+        if (hourlyChimeStrengthField) {
+          hourlyChimeStrengthField.classList.remove('is-hidden');
+        }
+      }
+
+      function hideHourlyStrengthChooser() {
+        hourlyStrengthVisible = false;
+        if (hourlyChimeField) {
+          hourlyChimeField.classList.remove('is-hidden');
+        }
+        if (hourlyChimeStrengthField) {
+          hourlyChimeStrengthField.classList.add('is-hidden');
+        }
+      }
+
 
       var segmentedGroups = document.querySelectorAll('.segmented');
       for (var g = 0; g < segmentedGroups.length; g += 1) {
@@ -409,6 +463,24 @@
             var field = group.getAttribute('data-field');
             var type = group.getAttribute('data-type') || 'text';
             var value = target.getAttribute('data-value');
+            if (field === 'hourlyChime') {
+              if (value === 'true') {
+                state.hourlyChime = true;
+                showHourlyStrengthChooser();
+              } else {
+                state.hourlyChime = false;
+                hideHourlyStrengthChooser();
+              }
+              syncButtons();
+              return;
+            }
+            if (field === 'hourlyChimeStrength') {
+              state.hourlyChimeStrength = normalizeHourlyChimeStrength(value);
+              state.hourlyChime = true;
+              hideHourlyStrengthChooser();
+              syncButtons();
+              return;
+            }
             if (type === 'bool') {
               value = value === 'true';
             }

@@ -28,7 +28,8 @@
       "Animation": 3,
       "VibrateOnOpen": 4,
       "HourlyChime": 5,
-      "SettingsRequest": 6
+      "SettingsRequest": 6,
+      "HourlyChimeStrength": 7
     },
     "capabilities": ["configurable"],
     "config": {
