@@ -71,6 +71,10 @@
         image-rendering: pixelated;
         transition: filter 0.35s ease, opacity 0.35s ease;
       }
+      .watch-preview img.is-switching {
+        opacity: 0;
+      }
+      }
       .watch-preview[data-theme='light'] img {
         filter: invert(1) hue-rotate(180deg);
       }
@@ -609,7 +613,11 @@ var watchFace = document.getElementById('watch-face');
               ? '../GeneralMagic_preview_12h.png'
               : '../GeneralMagic_preview.png';
           if (watchFace.getAttribute('src') !== previewSrc) {
+            watchFace.classList.add('is-switching');
             watchFace.setAttribute('src', previewSrc);
+            setTimeout(function () {
+              watchFace.classList.remove('is-switching');
+            }, 350);
           }
         }
       }
