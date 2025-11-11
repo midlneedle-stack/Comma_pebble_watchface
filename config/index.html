@@ -72,7 +72,7 @@
         object-fit: cover;
         display: block;
         image-rendering: pixelated;
-        opacity: 0;
+        
         transition: opacity 0.35s cubic-bezier(0.5, 0, 0, 1),
           filter 0.35s ease;
       }
@@ -201,7 +201,7 @@
       @keyframes ripple-animation {
         to {
           transform: scale(4);
-          opacity: 0;
+          
         }
       }
       body[data-ui-theme='light'] .segmented {
@@ -250,7 +250,7 @@
       }
       .vibe-options.is-hidden {
         max-height: 0;
-        opacity: 0;
+        
         pointer-events: none;
       }
       .field.is-hidden {
@@ -278,7 +278,7 @@
         position: relative;
         outline: none;
         -webkit-tap-highlight-color: transparent;
-        opacity: 0;
+        
       }
       .connect-button + .connect-button::before {
         content: '';
@@ -436,13 +436,13 @@
         <div class="field">
           <div class="field-label">Connect</div>
           <div class="connect-buttons">
-            <a href="https://x.com/midlneedle" class="connect-button ripple-button" data-ripple="light" target="_blank" rel="noopener noreferrer" style="border-top-right-radius: 0; border-bottom-right-radius: 0;">
+            <a href="https://x.com/midlneedle" class="connect-button ripple-button" data-ripple="light" target="_blank" rel="noopener noreferrer">
               Twitter
             </a>
-            <a href="https://github.com/midlneedle-stack/General_Magic_pebble_watchface" class="connect-button ripple-button" data-ripple="light" target="_blank" rel="noopener noreferrer" style="border-radius: 0;">
+            <a href="https://github.com/midlneedle-stack/General_Magic_pebble_watchface" class="connect-button ripple-button" data-ripple="light" target="_blank" rel="noopener noreferrer">
               GitHub
             </a>
-            <a href="https://www.are.na/vladislav-iv/channels" class="connect-button ripple-button" data-ripple="light" target="_blank" rel="noopener noreferrer" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
+            <a href="https://www.are.na/vladislav-iv/channels" class="connect-button ripple-button" data-ripple="light" target="_blank" rel="noopener noreferrer">
               Are.na
             </a>
           </div>
