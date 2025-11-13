@@ -233,12 +233,16 @@ static void prv_init_cells(GeneralMagicBackgroundLayerState *state) {
       if (is_digit) {
         cell->active = true;
       } else {
+#if defined(PBL_PLATFORM_APLITE)
+        cell->active = false;
+#else
         int percent = GENERAL_MAGIC_BG_ACTIVE_PERCENT +
                       (int)(prv_cell_bias(col, row, layout) * 32.0f);
         if (percent > 100) {
           percent = 100;
         }
         cell->active = (rand() % 100) < percent;
+#endif
       }
       prv_reset_cell(state, cell);
     }

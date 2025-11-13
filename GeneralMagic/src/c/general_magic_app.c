@@ -407,9 +407,57 @@ static void prv_inbox_received(DictionaryIterator *iter, void *context) {
   prv_handle_settings_message(iter);
 }
 
+static void prv_inbox_dropped(AppMessageResult reason, void *context) {
+  (void)context;
+  APP_LOG(APP_LOG_LEVEL_WARNING, "GeneralMagic inbox drop: %d", (int)reason);
+}
+
+static void prv_outbox_failed(DictionaryIterator *iter, AppMessageResult reason, void *context) {
+  (void)iter;
+  (void)context;
+  APP_LOG(APP_LOG_LEVEL_WARNING, "GeneralMagic outbox fail: %d", (int)reason);
+}
+
+static bool prv_message_try_open(uint32_t inbox_size, uint32_t outbox_size) {
+  if (!inbox_size || !outbox_size) {
+    return false;
+  }
+  const AppMessageResult result = app_message_open(inbox_size, outbox_size);
+  if (result == APP_MSG_OK) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "GeneralMagic AppMessage in=%lu out=%lu",
+            (unsigned long)inbox_size, (unsigned long)outbox_size);
+    return true;
+  }
+  APP_LOG(APP_LOG_LEVEL_WARNING, "GeneralMagic AppMessage open failed (%lu/%lu): %d",
+          (unsigned long)inbox_size, (unsigned long)outbox_size, (int)result);
+  return false;
+}
+
 static void prv_message_init(void) {
   app_message_register_inbox_received(prv_inbox_received);
-  app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
+  app_message_register_inbox_dropped(prv_inbox_dropped);
+  app_message_register_outbox_failed(prv_outbox_failed);
+
+  const uint32_t large_inbox = app_message_inbox_size_maximum();
+  const uint32_t large_outbox = app_message_outbox_size_maximum();
+  const uint32_t fallback_sizes[][2] = {
+      {large_inbox, large_outbox},
+      {256, 256},
+      {APP_MESSAGE_INBOX_SIZE_MINIMUM, APP_MESSAGE_INBOX_SIZE_MINIMUM},
+  };
+
+  bool opened = false;
+  for (size_t idx = 0; idx < ARRAY_LENGTH(fallback_sizes); ++idx) {
+    const uint32_t inbox = fallback_sizes[idx][0];
+    const uint32_t outbox = fallback_sizes[idx][1];
+    if (prv_message_try_open(inbox, outbox)) {
+      opened = true;
+      break;
+    }
+  }
+  if (!opened) {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "GeneralMagic AppMessage unavailable; settings disabled");
+  }
 }
 
 static void prv_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
@@ -427,7 +475,9 @@ static void prv_window_load(Window *window) {
   general_magic_layout_configure(bounds.size);
   s_background_layer = general_magic_background_layer_create(bounds);
   if (s_background_layer) {
+#if !defined(PBL_PLATFORM_APLITE)
     layer_add_child(root, general_magic_background_layer_get_layer(s_background_layer));
+#endif
   }
 
   s_digit_layer = general_magic_digit_layer_create(bounds);
