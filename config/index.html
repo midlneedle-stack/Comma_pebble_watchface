@@ -299,7 +299,7 @@
       .collapsible {
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 0;
         overflow: hidden;
         max-height: 600px;
         transition: max-height 0.35s cubic-bezier(0.5, 0, 0, 1),
@@ -315,7 +315,10 @@
         margin-top: 0;
       }
       .vibe-options .field-divider {
-        margin: 0;
+        margin: 16px 0;
+      }
+      .collapsible > .field + .field {
+        margin-top: 16px;
       }
       .field.is-hidden {
         display: none;
