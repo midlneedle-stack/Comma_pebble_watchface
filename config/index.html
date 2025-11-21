@@ -306,8 +306,11 @@
         gap: 16px;
         overflow: hidden;
         max-height: 600px;
-        transition: max-height 0.35s cubic-bezier(0.5, 0, 0, 1),
-          opacity 0.25s ease;
+        transition:
+          max-height 0.32s cubic-bezier(0.5, 0, 0, 1),
+          opacity 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+          transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+        transform: translateY(0);
       }
       .vibe-options.is-hidden,
       .collapsible.is-collapsed {
@@ -316,6 +319,9 @@
         pointer-events: none;
         transform: translateY(-6px);
         margin-top: 0;
+      }
+      .collapsible.is-animating {
+        pointer-events: none;
       }
       .vibe-options.is-animating {
         opacity: 0;
@@ -805,6 +811,24 @@
         }
       }
 
+      function setCollapseState(element, open) {
+        if (!element) {
+          return;
+        }
+        element.classList.add('is-animating');
+        if (open) {
+          element.classList.remove('is-collapsed');
+          requestAnimationFrame(function () {
+            element.classList.remove('is-animating');
+          });
+        } else {
+          element.classList.add('is-collapsed');
+          requestAnimationFrame(function () {
+            element.classList.remove('is-animating');
+          });
+        }
+      }
+
       function syncVibrationDependencies() {
         var animationEnabled = state.animation !== false;
         if (!animationEnabled && state.vibrateOnOpen) {
@@ -819,7 +843,7 @@
           }
         }
         if (vibrateOnStartCollapse) {
-          vibrateOnStartCollapse.classList.toggle('is-collapsed', !animationEnabled);
+          setCollapseState(vibrateOnStartCollapse, animationEnabled);
         }
         updateVibrationVisibility();
       }
