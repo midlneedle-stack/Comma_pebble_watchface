@@ -293,13 +293,15 @@
         gap: 22px;
         overflow: hidden;
         max-height: 600px;
-        transition: max-height 0.32s cubic-bezier(0.5, 0, 0, 1),
-          opacity 0.25s ease;
+        transition:
+          max-height 0.32s cubic-bezier(0.5, 0, 0, 1),
+          opacity 0.25s ease,
+          margin-top 0.25s cubic-bezier(0.5, 0, 0, 1);
       }
       .collapsible {
         display: flex;
         flex-direction: column;
-        gap: 0;
+        gap: 22px;
         overflow: hidden;
         max-height: 600px;
         transition: max-height 0.35s cubic-bezier(0.5, 0, 0, 1),
@@ -315,10 +317,7 @@
         margin-top: 0;
       }
       .vibe-options .field-divider {
-        margin: 16px 0;
-      }
-      .collapsible > .field + .field {
-        margin-top: 16px;
+        margin: 0;
       }
       .field.is-hidden {
         display: none;
