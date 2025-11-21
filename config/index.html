@@ -295,7 +295,9 @@
         max-height: 600px;
         transition:
           max-height 0.32s cubic-bezier(0.5, 0, 0, 1),
-          opacity 0.25s ease;
+          opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+          transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+        transform: translateY(0);
       }
       .collapsible {
         display: flex;
@@ -311,6 +313,7 @@
         max-height: 0;
         opacity: 0;
         pointer-events: none;
+        transform: translateY(-6px);
       }
       .vibe-options .field-divider {
         margin: 0;
