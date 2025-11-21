@@ -286,18 +286,16 @@
         display: flex;
       }
       .vibe-options {
-        margin-top: 0;
-        padding: 22px 0 0;
+        margin-top: 22px;
+        padding: 0;
         display: flex;
         flex-direction: column;
         gap: 22px;
         overflow: hidden;
         max-height: 600px;
-        transition:
-          max-height 0.32s cubic-bezier(0.5, 0, 0, 1),
+        transition: max-height 0.32s cubic-bezier(0.5, 0, 0, 1),
           opacity 0.25s ease;
       }
-      .vibe-options,
       .collapsible {
         overflow: hidden;
         max-height: 600px;
@@ -312,7 +310,9 @@
       }
       .vibe-options.is-hidden {
         margin-top: 0;
-        padding-top: 0;
+      }
+      .vibe-options .field-divider {
+        margin: 0;
       }
       .field.is-hidden {
         display: none;
